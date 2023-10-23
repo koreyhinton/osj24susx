@@ -5,7 +5,7 @@ window.visitedImages={}
 window.mapVisibility='hidden';
 
 var idx="D9";
-var debug=false
+var debug=false;
 var dbg_cell=new URL(location.href).searchParams.get("c");
 var dbg_item=new URL(location.href).searchParams.get("item");
 var dbg_final=new URL(location.href).searchParams.get("final");
@@ -110,7 +110,7 @@ var splashIntervalId=setInterval(function() {
     }
 }, 1100);
 
-var angle=225;
+angle=225;
 var px=-1  //player x, each gameloop needs position data immediately
 var py=-1  //gets assigned in setp function
 
@@ -200,7 +200,7 @@ window.dbg = function() {
                 var obj=map[idx].road[i][j];
                 var div=document.createElement("span")
                 div.style.position="absolute";
-                div.style.backgroundColor='blue'
+                div.style.backgroundColor='rgba(0,0,0,0.4)';
                 div.style.width='8px'
                 div.style.height='8px'
                 div.style.left=obj.x+"px"
@@ -219,9 +219,9 @@ window.dbg = function() {
             var obj=dots[j];
             var div=document.createElement("span")
             div.style.position="absolute";
-            div.style.backgroundColor='red'
-            div.style.width='8px'
-            div.style.height='8px'
+            div.style.backgroundColor='rgba(255,255,0,0.2)';
+            div.style.width='32px'
+            div.style.height='32px'
             div.style.left=obj.x+"px"
             div.style.top=obj.y+"px"
             div.className="dbg"
@@ -715,6 +715,7 @@ var editEl=null
 function mousedown(e) {
     e = e || window.event;
     console.log("{'x':"+e.clientX + "," + "'y':"+e.clientY+"},")
+    window.pnc(e.clientX, e.clientY);
     if (editEl==null) editEl=document.getElementById('edit');
     if (editEl.innerHTML != 'Edit' && e.clientY<=720) {
         if (drawDone) {
@@ -810,7 +811,10 @@ function point_at_nearest_safe(x,y) {
     var x=parseInt(window.getComputedStyle(plyr).left.replace("px",""))
     var y=parseInt(window.getComputedStyle(plyr).top.replace("px",""))
     //setp(player.x+dx,player.y+dy,player);
+
+    //TODO: can this be removed?
     setp(x+dx,y+dy,player);
+
     //var el=document.getElementById("player");
     ///angle = nearest_angle//((nearest_angle) % 360)
 //    console.log(angle)
@@ -839,9 +843,14 @@ window.draw_inv = function(inv) {
 }
 
 var keydown_positions=[]
-speedf=1;//speed factor
+speedf=0;//speed factor
 function keydown(e) {
     e = e || window.event;
+    /*if (e.keyCode == '37' || e.keyCode == '38' || e.keyCode == '39' || e.keyCode == '40') {
+        while(pnc_q.length > 0) {
+            pnc_q.pop();
+        }
+    }*/
     if (e.keyCode == '37') {
         // left
         var el=document.getElementById("player");
@@ -1094,7 +1103,7 @@ var plyrsz={
     '270':{'w':46,'h':35},
     '315':{'w':46,'h':38}
 }
-function gameloop() {
+window.gameloop = function() {
     if (transitioning)return;
     window.profile_start();
     window.profile_a_tick();
@@ -1122,15 +1131,34 @@ function gameloop() {
         dy=-1;
     }
 
-    dx*=speedf;dy*=speedf;
+    // pnc q overrides!
+    /*if (pnc_q.length > 0) {
+        var pnc_path = pnc_q[0];
+        var a = pnc_path.a;
+        var b = pnc_path.b;
+        dx = 0;
+        dy = 0;
+        if (a.x != b.x) {
+            dy = (a.y>b.y) ? -1 : 1;
+        } else {
+            dx = (a.x>b.x) ? -1 : 1;
+        }
+        if (a.x + dx == b.x && a.y + dy == b.y) {
+            pnc_q.shift();
+        }
+    }*/
+
+    dx*=speedf/**1.4*/;dy*=speedf/**1.4*/;
+    if (Math.abs(dx)>0&&dy==0){dx*=2;}
+    if (dx==0&&Math.abs(dy)>0){dy*=2;}
     var x=parseInt(window.getComputedStyle(plyr).left.replace("px",""))//px//parseInt(el.style.left.replace("px",""));
     var y=parseInt(window.getComputedStyle(plyr).top.replace("px",""))//py//parseInt(el.style.top.replace("px",""));
     var road=map[idx];
     var img=plyr;//use variable to improve game loop performace
     img.style.zIndex="1000";
 
-    var w= plyrsz[angle+""].w;//use variable to improve performance
-    var h=plyrsz[angle+""].h;//use variable to improve performance
+    var w= plyrsz[window.nearest_45(0,0,angle)+""].w;//use variable to improve performance
+    var h=plyrsz[window.nearest_45(0,0,angle)+""].h;//use variable to improve performance
 
     window.profile_b_tick();
     /*handle progress*/
@@ -1211,16 +1239,129 @@ function gameloop() {
 
     //if (debug) {dx*=2;dy*=2}
 //    console.log((y+h)>=road.y2)
+
+    var [x1,y1,x2,y2] = [0,0,parseInt(window.getComputedStyle(plyr).left.replace("px","")),720-parseInt(window.getComputedStyle(plyr).top.replace("px",""))];
+    /*{
+        var p=document.getElementById("player");
+        var playerx=parseInt(window.getComputedStyle(p).left.replace("px",""));
+        var playery=parseInt(window.getComputedStyle(p).top.replace("px",""));
+        x1 = playerx;
+        y1 = 720 - 
+    }*/
+
+    //angle = 88; // TODO: remove
+    // appears to kind of work, but it is tricky and it jumps quickly, need
+    // to find a way to go less of a distance
+
+    var try_x = 0;
+    var try_y = 0;
+    if (/*70<angle&&angle<110*/ angle== 90) {
+        try_y -= 1;
+    } else if (/*250<angle&&angle<290*/ angle == 270) {
+        try_y += 1;
+    } else if (/*(340<angle&&angle<360)||(0<=angle&&angle<20)*/ angle == 0) {
+        try_x += 1;
+    } else if (/*160<angle&&angle<200*/ angle == 180) {
+        try_x -= 1;
+    } else {
+
+        var capt_y = y;
+        var capt_x = x;
+        y = 720 - y;
+
+        var inc_x = angle > 90 && angle < 270 ? -1 : 1;
+
+        try_x /*+=*/= inc_x;
+        // try_x *= 30;
+        //try_x = 1;
+        var tan = Math.tan(angle*(Math.PI/180.0))
+        var cotan = tan == 0 ? 0 : 1.0 / tan;
+        // angle = rise/run
+        // or Cot(angle) = run/rise
+       
+        //try_x = rise * cotan;
+        //var rise =cotan==0?0: (try_x) / cotan; //(x+ Math.abs(try_x)) / cotan;
+
+        // var rise = angle * try_x;
+        // degrees = arctan(rise/run)
+        // tan(degrees) = rise/run
+        // var rise = 1/Math.tan(angle);//*try_x;
+
+        //var rise = cotan==0?0: try_x/cotan;
+
+        //console.log('test divide try_x / cotan', try_x, cotan, try_x/cotan);
+
+        //var m = rise / try_x;
+        // var m = 1 / Math.tan(angle);
+
+        // tan(th) = opp / adj;
+        // adj is x or the run
+        // try_x = 1;
+        var rise = Math.tan(angle*Math.PI/180.0);// * 180.0/Math.PI;// * try_x;
+        var m = rise; //Math.tan(angle);
+        console.warn('m = ', m);
+        //var b = (/*720-y+*/try_y)+rise - m*(/*x+*/try_x);
+        var b = 0; // player is origin, angle crossing origin
+        // try_y = rise;
+
+        let distf = (x1,y1,x2,y2) => {
+            return (x2 - x1)*(x2 - x1) + (y2 - y1)*(y2 - y1);
+        };
+        var max_iter = 14;
+        var iter = 0;
+
+        // try_x += (inc_x*2);
+        //try_y = /*y==0 ? 0 :*/ y-(m*(x+try_x) + b);
+
+        // uncomment?
+        // try_y = (m*(/*x+*/try_x) + b);
+
+
+        //try_y = 720 - try_y;
+        //console.log('inc_x, cotan, rise, try_x, m, b,try_y', inc_x, cotan, rise, try_x, m, b, try_y);
+        console.log(`old=${capt_x}, ${capt_y}; new = ${x+try_x},${capt_y+try_y}; y = mx + b; ${try_y} = ${m}*(${try_x})+${b}; cotan=${cotan}`);
+
+        //try_y = 720 - try_y;
+
+        var test_y = try_y;
+        //if ((angle > 180 && try_y >0)||(angle<180&&try_y<0)) { test_y *= -1; }
+        while (false &&distf(x+try_x, /*(720-*/capt_y/*)*/+(-1*try_y), x2, capt_y) > 0.1) {
+            try_x += inc_x;//*2;
+            try_y = (m*(/*x+*/try_x) + b);
+            //try_y = (m*(/*x+*/try_x) + b) /*- (720-y)*/;
+            //rise = /*Math.abs(*/try_x/*)*/ / cotan;
+            //try_y = rise;
+            //test_y = try_y;
+            //if ((angle > 180 && test_y >0)||(angle<180&&test_y<0)) { test_y *= -1; }
+            iter += 1;
+            if (iter >= max_iter) { console.log("MAX ITER"); break; }
+        }
+        //if ((angle > 180 && try_y >0)||(angle<180&&try_y<0)) try_y *= -1;
+
+        try_x = 2*Math.cos(angle*Math.PI/180.0);  // SOH [CAH] TOA
+        try_y = (m*(/*x+*/try_x) + b);
+        try_y *= -1;
+        console.warn('try_y', try_y);
+        y = capt_y;
+    }
+    if (speedf <= 0) { try_x=0; try_y=0; }
+
+    // y = mx + b
+    // m = (x2 - x1)^2 + (y2-y1)^2
+console.warn(try_x);
     var pts=[/*
         {'x':x, 'y':y},
         {'x':x+w,'y':y},
         {'x':x,'y':y+h},
         {'x':x+w,'y':y+h},*/
-        {'x':x+dx+(w/2.0),'y':y+dy+(h/2.0)}//center-point
+        // {'x':x+dx+(w/2.0),'y':y+dy+(h/2.0)}//center-point
+        { x: x+try_x + (w/2.0), y: y+try_y +(h/2.0)}
     ]
     var valid=(idx!='D9'&&idx!='E9'&&idx!='E8'&&idx!='B8')?inside_simple_polygons_fallback(pts,map[idx].road):inside_simple_polygons(pts,map[idx].road);
     if (valid) {
-        setp(x+dx,y+dy,el)
+console.warn(valid);
+        if (speedf>0)dbg_clear();
+        setp(x+/*dx*/try_x,y/*+dy*/ +try_y,el)
         /*el.style.top=(y+dy)+"px";
         el.style.left=(x+dx)+"px";*/
         lastX=x;
@@ -1293,12 +1434,13 @@ function gameloop() {
             }
         }
     } else {
+        speedf=0;
         /*var quads = quadrants_simple_polygons(pts,map[idx])
         var quad1=quads.quad1;var quad2=quads.quad2;var quad3=quads.quad3;
             var quad4=quads.quad4;*/
         if (lastX<0)return;
         dx=0;dy=0;
-        point_at_nearest_safe(x+dx,y+dy);
+        point_at_nearest_safe(x/*+dx*/+try_x,y/*+dy*/+try_y);
         //var dy=(lastY-y)*4;
         //var dx=(lastX-x)*4;
         /*setp(x+dx,y+dy)*//*
@@ -1318,6 +1460,7 @@ function gameloop() {
         else if (!quad4) { y+=1;x-=1; } 
         el.style.top=(y)+"px";
         el.style.left=(x)+"px";*/
+        dbg();
     }
     /*
     if (x>=road.x1 && (x+w)<=road.x2 && (y+h)<=road.y1 && (y)>=road.y2) {
@@ -1425,6 +1568,7 @@ function gameloop() {
     }
     slowrt_it+=1
     if (slowrt_it==1000000)slowrt_it=0;
+    //if (true) {console.log('CLEAR INTERVAL'), clearInterval(gameLoopInt);}
 }
 window.test=null;//todo:remove
 
@@ -1620,10 +1764,10 @@ var intId=setInterval(function(){
         document.onkeydown = keydown;
         document.onclick=mousedown;
 
-        draw_button("up",1000,600-3);
+        /*draw_button("up",1000,600-3);
         draw_button("down",1000,644);
         draw_button("left",956-3,644);
-        draw_button("right",1044+3,644);
+        draw_button("right",1044+3,644);*/
         var space=draw_button("space",764,644);
         space.style.width='176px';
         space.style.height='44px';
@@ -1682,7 +1826,7 @@ var intId=setInterval(function(){
 	if (idx=="D9")
             music_play("D9");
 	
-        setInterval(gameloop, 10);
+        gameLoopInt=setInterval(gameloop, 10);
         return;
     }
     //document.getElementById("game").innerHTML=document.getElementById("game").innerHTML+instructions[0];
