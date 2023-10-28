@@ -28,7 +28,7 @@ if (dbg_final!=null){
     }
 }
 
-
+divs2=[];
 window.profile_time=null;
 window.profile_a=0;
 window.profile_b=0;
@@ -57,7 +57,7 @@ window.profile_b_tick=function() {
     //if (window.profile_a>0.005 || window.profile_b>0.005) window.prof();
     window.profile_last_sample=newdt;
 }
-window.prof=function(){console.log(window.profile_a+", "+window.profile_b);}
+window.prof=function(){/*console.log(window.profile_a+", "+window.profile_b);*/}
 
 var instructions="Welcome mouse detective! Are you ready for your first assignment? There is an elf hiding behind a mask that is causing all sorts of mayhem, stealing toys and stealing the holiday joy. Your assignment is to find which elf is hiding behind the mask. Use the left and right arrow controls to steer your vehicle. Starting in.......... Three.............................. Two.............................. One.............................."
 
@@ -194,6 +194,9 @@ window.dbg_clear = function() {
 window.dbg = function() {
     var els=document.getElementsByClassName("dbg")
     while (els.length>0) {els[0].remove()}//.outerHTML="";els.pop()}
+    var fade = 1;
+    divs = [];
+var game = document.getElementById("game");
     for (var i=0;i<map[idx].road.length;i++) {
         for (var j=0;j<map[idx].road[i].length;j++) {
             //for (var k=0;k<map[idx][i][j].length;k++) {
@@ -205,21 +208,67 @@ window.dbg = function() {
                 div.style.height='8px'
                 div.style.left=obj.x+"px"
                 div.style.top=obj.y+"px"
-                div.className="dbg"
+                div.className="dbg2"
+                //div.zIndex="1000000";
+                div.id = "fade"+fade;
                 div.style.zIndex="100005";
-                //div.style.display=""
-                document.getElementById("game").appendChild(div)
+                fade += 1;
+                game.appendChild(div);
+                div.style.visibility = 'hidden';
+                /*
+                var f = function() {
+                    div.style.visibility = 'visible';
+                };
+                divs.push(f);*/
+                divs.push(div);
+                //setTimeout(f, 100);
                 //console.log(window.getComputedStyle(div).left+","+window.getComputedStyle(div).top)
             //}
         }
     }
+
+    let fs = [];
+    let is = [];
+    //for (var i = fade-1;i>-1; i--) {
+    if (divs2.length > 0) return;//fixes bug where boundary indicators stay onscreen
+    divs2=[];
+    var showInterval = setInterval(function() {
+        if (divs.length == 0) {
+            setTimeout(() => {
+                while (divs2.length > 0) {
+                    var popped2 = divs2.pop();
+                    popped2.remove();
+                }
+            }, 600);//todo: also need to clear after entering a different scene
+            clearInterval(showInterval);
+            return;
+        }
+        var popped = divs.pop();
+        popped.style.visibility = 'visible';
+        divs2.push(popped);
+    }, 1);
+//     for (var i=0;i<divs.length;i++){
+//         // is setTimeout re-defined somewhere??
+//         var div = divs[i];
+//         var f = () => {
+//             div.style.visibility = 'visible';
+//             //if (i==5)console.log('fade', fade);
+//             //var el = div;//document.getElementById("fade"+i);
+//             //if (el == null) { console.warn('fade'+1+' was invalid'); return; }
+//             //else { el.style.visibility = 'visible'; }
+//         };
+//         setTimeout(f, i*1000);
+//         //fs.push(f);is.push(i);
+//     }
+
     for (var i=0;i<map[idx].exits.length;i++) {
         var dots=map[idx].exits[i].dots;
         for (var j=0;j<dots.length;j++) {
             var obj=dots[j];
             var div=document.createElement("span")
             div.style.position="absolute";
-            div.style.backgroundColor='rgba(255,255,0,0.2)';
+            var color= ['rgba(255,255,0,0.2)','rgba(0,255,0,0.2)','rgba(0,255,255,0.2)','rgba(255,0,255,0.2)'][i%4];
+            div.style.backgroundColor=color;
             div.style.width='32px'
             div.style.height='32px'
             div.style.left=obj.x+"px"
@@ -229,7 +278,8 @@ window.dbg = function() {
             document.getElementById("game").appendChild(div)
         }
     }
-    for (var i=0;i<Object.keys(map[idx].entrances).length;i++){
+    // TODO: uncomment to see entrance and safe points
+    /*for (var i=0;i<Object.keys(map[idx].entrances).length;i++){
         var key=Object.keys(map[idx].entrances)[i];
         var dot=create_dot(map[idx].entrances[key].x,map[idx].entrances[key].y,'gray', 100);
         dot.style.opacity=0.9;
@@ -237,7 +287,7 @@ window.dbg = function() {
     for (var i=0;i<map[idx].safe.length;i++){
         var pt=map[idx].safe[i];
         create_dot(pt.x,pt.y,'black', 7);
-    }
+    }*/
 }
 
 function similar_x(x1,x2) {
@@ -716,6 +766,8 @@ function mousedown(e) {
     e = e || window.event;
     console.log("{'x':"+e.clientX + "," + "'y':"+e.clientY+"},")
     window.pnc(e.clientX, e.clientY);
+    e.view.event.preventDefault();
+    return;
     if (editEl==null) editEl=document.getElementById('edit');
     if (editEl.innerHTML != 'Edit' && e.clientY<=720) {
         if (drawDone) {
@@ -1093,7 +1145,7 @@ var slowrt_it=0;
 var pres_i=0;
 var pres_throttle=0;
 var plyr=null;
-var plyrsz={
+plyrsz={
     '0':{'w':47,'h':39},
     '45':{'w':43,'h':41},
     '90':{'w':48,'h':43},
@@ -1103,6 +1155,7 @@ var plyrsz={
     '270':{'w':46,'h':35},
     '315':{'w':46,'h':38}
 }
+var frame = 0;
 window.gameloop = function() {
     if (transitioning)return;
     window.profile_start();
@@ -1249,12 +1302,32 @@ window.gameloop = function() {
         y1 = 720 - 
     }*/
 
-    //angle = 88; // TODO: remove
+    let distf = (x1,y1,x2,y2) => {
+        return (x2 - x1)*(x2 - x1) + (y2 - y1)*(y2 - y1);
+    };
+
+    if (window.clickTarget != null) {
+        //
+        if (distf(x+(w/2.0),(720-(y+(h/2.0))), window.clickTarget.x, (720-(window.clickTarget.y))) < 380) {
+            window.clickTarget = null;
+            speedf=0;
+        }
+    }
+
+    //angle = 77; // TODO: remove
     // appears to kind of work, but it is tricky and it jumps quickly, need
     // to find a way to go less of a distance
 
+    if (frame + 1 > 100000) frame = 0;
+    frame += 1;
+    var draw = false;
+    if (frame % 7 == 0) {
+        draw = true;
+    }
+
     var try_x = 0;
     var try_y = 0;
+
     if (/*70<angle&&angle<110*/ angle== 90) {
         try_y -= 1;
     } else if (/*250<angle&&angle<290*/ angle == 270) {
@@ -1265,90 +1338,32 @@ window.gameloop = function() {
         try_x -= 1;
     } else {
 
+        var playerX = x;
+        var playerY = y;
+
         var capt_y = y;
         var capt_x = x;
         y = 720 - y;
 
-        var inc_x = angle > 90 && angle < 270 ? -1 : 1;
-
-        try_x /*+=*/= inc_x;
-        // try_x *= 30;
-        //try_x = 1;
-        var tan = Math.tan(angle*(Math.PI/180.0))
-        var cotan = tan == 0 ? 0 : 1.0 / tan;
-        // angle = rise/run
-        // or Cot(angle) = run/rise
-       
-        //try_x = rise * cotan;
-        //var rise =cotan==0?0: (try_x) / cotan; //(x+ Math.abs(try_x)) / cotan;
-
-        // var rise = angle * try_x;
-        // degrees = arctan(rise/run)
-        // tan(degrees) = rise/run
-        // var rise = 1/Math.tan(angle);//*try_x;
-
-        //var rise = cotan==0?0: try_x/cotan;
-
-        //console.log('test divide try_x / cotan', try_x, cotan, try_x/cotan);
-
-        //var m = rise / try_x;
-        // var m = 1 / Math.tan(angle);
-
-        // tan(th) = opp / adj;
-        // adj is x or the run
-        // try_x = 1;
-        var rise = Math.tan(angle*Math.PI/180.0);// * 180.0/Math.PI;// * try_x;
-        var m = rise; //Math.tan(angle);
-        console.warn('m = ', m);
-        //var b = (/*720-y+*/try_y)+rise - m*(/*x+*/try_x);
-        var b = 0; // player is origin, angle crossing origin
-        // try_y = rise;
-
-        let distf = (x1,y1,x2,y2) => {
-            return (x2 - x1)*(x2 - x1) + (y2 - y1)*(y2 - y1);
-        };
-        var max_iter = 14;
-        var iter = 0;
-
-        // try_x += (inc_x*2);
-        //try_y = /*y==0 ? 0 :*/ y-(m*(x+try_x) + b);
-
-        // uncomment?
-        // try_y = (m*(/*x+*/try_x) + b);
-
-
-        //try_y = 720 - try_y;
-        //console.log('inc_x, cotan, rise, try_x, m, b,try_y', inc_x, cotan, rise, try_x, m, b, try_y);
-        console.log(`old=${capt_x}, ${capt_y}; new = ${x+try_x},${capt_y+try_y}; y = mx + b; ${try_y} = ${m}*(${try_x})+${b}; cotan=${cotan}`);
-
-        //try_y = 720 - try_y;
-
-        var test_y = try_y;
-        //if ((angle > 180 && try_y >0)||(angle<180&&try_y<0)) { test_y *= -1; }
-        while (false &&distf(x+try_x, /*(720-*/capt_y/*)*/+(-1*try_y), x2, capt_y) > 0.1) {
-            try_x += inc_x;//*2;
-            try_y = (m*(/*x+*/try_x) + b);
-            //try_y = (m*(/*x+*/try_x) + b) /*- (720-y)*/;
-            //rise = /*Math.abs(*/try_x/*)*/ / cotan;
-            //try_y = rise;
-            //test_y = try_y;
-            //if ((angle > 180 && test_y >0)||(angle<180&&test_y<0)) { test_y *= -1; }
-            iter += 1;
-            if (iter >= max_iter) { console.log("MAX ITER"); break; }
-        }
-        //if ((angle > 180 && try_y >0)||(angle<180&&try_y<0)) try_y *= -1;
-
-        try_x = 2*Math.cos(angle*Math.PI/180.0);  // SOH [CAH] TOA
-        try_y = (m*(/*x+*/try_x) + b);
+        var dxy = window.dxy(angle, 25); // anything under 25 and it misses in certain angles. too short of a distance means it won't go in a straight line to the click point because fractional dx, dy will get rounded.
+        try_y = dxy.dy;
+        try_x = dxy.dx;
         try_y *= -1;
-        console.warn('try_y', try_y);
+
+        /*var ctx = document.getElementById("canv").getContext("2d");
+        ctx.clearRect(playerX, playerY, playerX+100, playerY+100);
+        ctx.drawImage(document.getElementById("player"), playerX+try_x, playerY+try_y);*/
+        //console.log(ctx);
+        //console.log(window.dxy(77, 2));
+
+
         y = capt_y;
     }
-    if (speedf <= 0) { try_x=0; try_y=0; }
+    if (!draw || speedf <= 0) { try_x=0; try_y=0; }
 
     // y = mx + b
     // m = (x2 - x1)^2 + (y2-y1)^2
-console.warn(try_x);
+//console.warn(try_x);
     var pts=[/*
         {'x':x, 'y':y},
         {'x':x+w,'y':y},
@@ -1359,7 +1374,7 @@ console.warn(try_x);
     ]
     var valid=(idx!='D9'&&idx!='E9'&&idx!='E8'&&idx!='B8')?inside_simple_polygons_fallback(pts,map[idx].road):inside_simple_polygons(pts,map[idx].road);
     if (valid) {
-console.warn(valid);
+//console.warn(valid);
         if (speedf>0)dbg_clear();
         setp(x+/*dx*/try_x,y/*+dy*/ +try_y,el)
         /*el.style.top=(y+dy)+"px";
