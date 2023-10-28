@@ -537,6 +537,9 @@ function get_exit(arr, exit) {
 }
 
 function shift_screen(from, to) {
+   window.pathQ.values.length = 0;
+   window.pathFind(to, 1280, 720, {x: 0, y: 0}, {x: 0, y: 0}, map[to].road);
+   window.pathQ.values.length = 0;
    var SHIFT_WAIT=100;
    transitioning=true
    music_stop();
@@ -762,10 +765,37 @@ var drawDone=false
 var drawx=0; var drawy1=0;
 var drawQ=[]
 var editEl=null
+
+window.playerXY = function() {
+    var playerX = parseInt(
+        window.getComputedStyle(player)
+            .left
+            .replace("px", "")
+    );
+    var playerY = parseInt(
+        window.getComputedStyle(player)
+            .top
+            .replace("px", "")
+    );
+
+    var w= plyrsz[window.nearest_45(0,0,angle)+""].w;//use variable to improve performance
+    var h=plyrsz[window.nearest_45(0,0,angle)+""].h;//use variable to improve performance
+
+    playerX += (w/2.0);
+    playerY += (h/2.0);
+
+    return { x: parseInt(playerX), y: 720-parseInt(playerY) };
+};
+
 function mousedown(e) {
     e = e || window.event;
     console.log("{'x':"+e.clientX + "," + "'y':"+e.clientY+"},")
     window.pnc(e.clientX, e.clientY);
+
+    window.pathFind(idx, 1280, 720, window.playerXY(), {x: e.clientX, y: 720-e.clientY}, map[idx].road);
+
+    console.log('pathFind', window.pathQ.values);
+
     e.view.event.preventDefault();
     return;
     if (editEl==null) editEl=document.getElementById('edit');
@@ -1345,10 +1375,28 @@ window.gameloop = function() {
         var capt_x = x;
         y = 720 - y;
 
-        var dxy = window.dxy(angle, 25); // anything under 25 and it misses in certain angles. too short of a distance means it won't go in a straight line to the click point because fractional dx, dy will get rounded.
+        /*var dxy = window.dxy(angle, 25); // anything under 25 and it misses in certain angles. too short of a distance means it won't go in a straight line to the click point because fractional dx, dy will get rounded.
         try_y = dxy.dy;
-        try_x = dxy.dx;
-        try_y *= -1;
+        try_x = dxy.dx;*/
+
+        if (window.pathQ.values.length > 0) {
+            /*if (window.pathQ.values.length > 1) {
+                window.pathQ.values.shift();
+            }*/
+            if (window.pathQ.values.length > 2) {
+                window.pathQ.values.shift();
+                window.pathQ.values.shift();
+            }
+            let pathPoint = window.pathQ.values.shift();
+            let ppx = parseInt(pathPoint[0]);
+            let ppy = parseInt(pathPoint[1]);
+            try_x = ppx-x;
+            try_y = (ppy)-y;
+            if (window.pathQ.values.length == 0)
+                console.log(pathPoint, y, ppy, try_y);
+
+            try_y *= -1;
+        }
 
         /*var ctx = document.getElementById("canv").getContext("2d");
         ctx.clearRect(playerX, playerY, playerX+100, playerY+100);
@@ -1359,7 +1407,7 @@ window.gameloop = function() {
 
         y = capt_y;
     }
-    if (!draw || speedf <= 0) { try_x=0; try_y=0; }
+    if (/*!draw ||*/ speedf <= 0) { try_x=0; try_y=0; }
 
     // y = mx + b
     // m = (x2 - x1)^2 + (y2-y1)^2
@@ -1373,6 +1421,18 @@ window.gameloop = function() {
         { x: x+try_x + (w/2.0), y: y+try_y +(h/2.0)}
     ]
     var valid=(idx!='D9'&&idx!='E9'&&idx!='E8'&&idx!='B8')?inside_simple_polygons_fallback(pts,map[idx].road):inside_simple_polygons(pts,map[idx].road);
+
+    if (!valid) {
+        if (divs2.length == 0) window.dbg();
+        return;
+        /*
+        console.warn('error', pts);
+        var safeXY = nearest_safe_point(parseInt(pts[0].x), parseInt(pts[0].y));
+        window.pathFind(idx, 1280, 720, window.playerXY(), {x:safeXY.x, y:720-safeXY.y}, map[idx].road);
+        valid = true; // todo: ??
+        */
+    }
+
     if (valid) {
 //console.warn(valid);
         if (speedf>0)dbg_clear();
