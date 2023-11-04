@@ -2,6 +2,7 @@
 //window.pnc_q = [];
 
 window.clickTarget = null;
+window.origAngle = null;
 
 window.dxy = function(angle, dist) {
     var dx = 0; var dy = 0;
@@ -46,6 +47,100 @@ window.nearest_45 = function(a, b, deg) {
     return nearest_angle;
 };
 
+window.resolveClick = function(id, w, h, from, to, obstacleSets, compressed) {
+    var distf = (x1,y1,x2,y2) => {
+        return Math.sqrt((x2 - x1)*(x2 - x1) + (y2 - y1)*(y2 - y1));
+    };
+    let find = (source, target) => {
+        return window.pathFind(id, 1280, 720, source, target, obstacleSets, compressed);
+    }
+    let test = (source, target) => {
+        return window.pathTest(id, 1280, 720, source, target, obstacleSets, compressed);
+    };
+    let [offX, offY] = window.playerCenterOffset();
+    var click = { x: to.x-parseInt(offX), y: to.y+parseInt(offY) };
+    var inBounds = test(from, click);
+    var resolved = false;
+    var adjClick = { x: click.x, y: click.y };
+    var adjStart = { x: from.x-parseInt(offX), y: from.y+parseInt(offY) };
+    /*
+    adjClick.x -= parseInt(offX);
+    adjClick.y -= parseInt(offY);
+    adjStart.x -= parseInt(offX);
+    adjStart.y -= parseInt(offY);
+    */
+
+    if (inBounds) {
+        resolved = true;
+    } else {
+        var fullDist = distf(from.x,from.y, click.x, click.y);
+        console.warn(fullDist, distf(from.x,from.y, click.x, click.y));
+        // optimize for 10 pathFind calls
+        var ratio = /*parseInt(*/fullDist / 10.0;/*);*/
+        // to increase responsiveness, decrease the number of pathFind calls
+        // for better accuracy (get closer to boundary), increase the number of pathFind calls
+
+        var incrDist = ratio; // fullDist / 5.0;
+        //console.warn(from, click, fullDist, 5.0, incrDist);
+        // var incrDist = 35;
+        let a = angle;
+        while ((fullDist > 10) && (fullDist - 10 > incrDist)) {
+            var dxy = window.dxy((a+180)%360, incrDist);
+            adjClick = { x: click.x+parseInt(dxy.dx), y: click.y+parseInt(dxy.dy) };
+            if (test(from, adjClick)) {
+                resolved = true;
+                break;
+            }
+            incrDist += ratio; //35;
+            //incrDist *= 1.75;
+        }
+    }
+
+    var safeXY = nearest_safe_point(adjClick.x, 720-adjClick.y);
+    safeXY.y = 720-adjClick.y;
+    /*safeXY.x -= parseInt(offX);
+    safeXY.y -= parseInt(offY);*/
+    if (test(adjClick, safeXY)) {
+        // if player won't be able to walk from the target to the target's
+        // nearest safe point, then just have the player walk to the nearest
+        // safe point.
+        // This fixes a bug spotted on B8 where clicking on top-right most area
+        // within road boundary while being at the bottom-right most area within
+        // the road boundary results in the player going and staying outside the
+        // road boundary.
+        //find(safeXY);
+        //adjClick = safeXY;
+
+        adjStart = window.nearest_safe_point(adjStart.x, 720-adjStart.y);
+        adjStart.y = 720-adjStart.y;
+        adjStart.x -= parseInt(offX);
+        adjStart.y -= parseInt(offY);
+
+        console.warn("finding safe path from, to", adjStart, safeXY)
+        //adjStart.x-=parseInt(offX);
+        //adjStart.y+=parseInt(offY);
+        inBounds = true;
+        resolved = true;
+        console.warn(adjStart);
+        //adjStart.x -= parseInt(offX);
+        //adjStart.y -= parseInt(offY);
+        console.warn('re-assigning to', adjStart);
+        //window.setp(adjStart.x, (720-adjStart.y));
+        //window.goto_nearest_safe(from.x, 720-from.y); //adjStart.x, (720-adjStart.y));
+
+        // the solution of finding the nearest safe point was buggy too,
+        // until a more permanent fix just do exactly what the recenter button
+        // does if player is stuck outside the bounds:
+        window.goto_nearest_safe(640,360); // recenter
+        return { inBounds, resolved };
+    }
+    console.warn(find(adjStart, adjClick));
+    return {
+        inBounds,
+        resolved
+    };
+}
+
 window.pnc = function(x, y) {
     window.clickTarget = { x: x, y: y };
     var playerX = parseInt(
@@ -79,4 +174,8 @@ window.pnc = function(x, y) {
 //gameloop();
     //pnc_q.push({a: {x: playerX, y: 720-playerY}, b: {x: x, y: 720-playerY}});
     //pnc_q.push({a: {x: x, y: playerY}, b: {x: x, y: y}});
+
+    if (window.origAngle == null) {
+        window.origAngle = angle;
+    }
 };

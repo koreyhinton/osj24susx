@@ -1,5 +1,13 @@
 /*BEGIN*/document.addEventListener('DOMContentLoaded', function() {
 
+function roadBoundary(i) {
+    let compressed = null;
+    if (map[i].hasOwnProperty('boundary')) {
+        compressed = map[i]['boundary'];
+    }
+    return compressed;
+}
+
 window.visited=['D9'];
 window.visitedImages={}
 window.mapVisibility='hidden';
@@ -14,6 +22,7 @@ if (dbg_cell != null) {
     //debug=true;
     idx=dbg_cell
 }
+window.pathFind(idx, 1280, 720, {x: 0, y: 0}, {x: 0, y: 0}, map[idx].road, roadBoundary(idx));
 
 window.item=null;
 var suspects=0;
@@ -188,65 +197,110 @@ function draw_map() {
 }
 
 window.dbg_clear = function() {
-    var els=document.getElementsByClassName("dbg")
+    let dbgElClsNm = "dbg_bound";
+    var els=document.getElementsByClassName(/*"dbg"*/dbgElClsNm)
     while (els.length>0) {els[0].remove()}//.outerHTML="";els.pop()}
 }
 window.dbg = function() {
     var els=document.getElementsByClassName("dbg")
     while (els.length>0) {els[0].remove()}//.outerHTML="";els.pop()}
-    var fade = 1;
-    divs = [];
-var game = document.getElementById("game");
-    for (var i=0;i<map[idx].road.length;i++) {
-        for (var j=0;j<map[idx].road[i].length;j++) {
-            //for (var k=0;k<map[idx][i][j].length;k++) {
-                var obj=map[idx].road[i][j];
-                var div=document.createElement("span")
+    var game = document.getElementById("game");
+    var nodes = this.pathG.value.grid.nodes;
+    console.log('will iter nodes');
+    let dbgElClsNm = "dbg_bound";
+    if (document.getElementsByClassName(dbgElClsNm).length > 0) return;
+    for (var i=0; i<nodes.length; i++) {
+        for (var j=0; j<nodes[i].length; j++) {
+            var node = nodes[i][j];
+            var x = node.x;
+            var y = 720 - node.y;
+            if (!node.walkable) {
+                //console.log('not walkable', x, y);
+                var div=document.createElement("span");
                 div.style.position="absolute";
-                div.style.backgroundColor='rgba(0,0,0,0.4)';
-                div.style.width='8px'
-                div.style.height='8px'
-                div.style.left=obj.x+"px"
-                div.style.top=obj.y+"px"
-                div.className="dbg2"
-                //div.zIndex="1000000";
-                div.id = "fade"+fade;
-                div.style.zIndex="100005";
-                fade += 1;
+                div.style.left = x+'px';
+                div.style.top = y+'px';
+                div.style.width="1px";
+                div.style.height="1px";
+                div.style.backgroundColor = 'red';
+                div.style.zIndex = "100000";
+                div.className=dbgElClsNm;
                 game.appendChild(div);
-                div.style.visibility = 'hidden';
-                /*
-                var f = function() {
-                    div.style.visibility = 'visible';
-                };
-                divs.push(f);*/
-                divs.push(div);
-                //setTimeout(f, 100);
-                //console.log(window.getComputedStyle(div).left+","+window.getComputedStyle(div).top)
-            //}
+            }
         }
     }
+    /*
+    return;
+    var ctx = document.getElementById("canv").getContext("2d");
+    ctx.clearRect(0,0, 1280,720);
+    ctx.fillStyle = 'rgba(0,0,255,0.1)';
+    ctx.strokeStyle = 'rgb(0,0,255)';
+    ctx.beginPath();
+    ctx.moveTo(map[idx].road[0][0].x, map[idx].road[0][0].y);
+    for (var i=1; i<map[idx].road[0].length; i++) {
+        ctx.lineTo(map[idx].road[0][i].x, map[idx].road[0][i].y);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    return;
+    */
 
-    let fs = [];
-    let is = [];
-    //for (var i = fade-1;i>-1; i--) {
-    if (divs2.length > 0) return;//fixes bug where boundary indicators stay onscreen
-    divs2=[];
-    var showInterval = setInterval(function() {
-        if (divs.length == 0) {
-            setTimeout(() => {
-                while (divs2.length > 0) {
-                    var popped2 = divs2.pop();
-                    popped2.remove();
-                }
-            }, 600);//todo: also need to clear after entering a different scene
-            clearInterval(showInterval);
-            return;
-        }
-        var popped = divs.pop();
-        popped.style.visibility = 'visible';
-        divs2.push(popped);
-    }, 1);
+//     var fade = 1;
+//     divs = [];
+// 
+//     for (var i=0;i<map[idx].road.length;i++) {
+//         for (var j=0;j<map[idx].road[i].length;j++) {
+//             //for (var k=0;k<map[idx][i][j].length;k++) {
+//                 var obj=map[idx].road[i][j];
+//                 var div=document.createElement("span")
+//                 div.style.position="absolute";
+//                 div.style.backgroundColor='rgba(0,0,0,0.4)';
+//                 div.style.width='8px'
+//                 div.style.height='8px'
+//                 div.style.left=obj.x+"px"
+//                 div.style.top=obj.y+"px"
+//                 div.className="dbg2"
+//                 //div.zIndex="1000000";
+//                 div.id = "fade"+fade;
+//                 div.style.zIndex="100005";
+//                 fade += 1;
+//                 game.appendChild(div);
+//                 div.style.visibility = 'hidden';
+//                 /*
+//                 var f = function() {
+//                     div.style.visibility = 'visible';
+//                 };
+//                 divs.push(f);*/
+//                 divs.push(div);
+//                 //setTimeout(f, 100);
+//                 //console.log(window.getComputedStyle(div).left+","+window.getComputedStyle(div).top)
+//             //}
+//         }
+//     }
+// 
+//     let fs = [];
+//     let is = [];
+//     //for (var i = fade-1;i>-1; i--) {
+//     if (divs2.length > 0) return;//fixes bug where boundary indicators stay onscreen
+//     divs2=[];
+//     var showInterval = setInterval(function() {
+//         if (divs.length == 0) {
+//             setTimeout(() => {
+//                 while (divs2.length > 0) {
+//                     var popped2 = divs2.pop();
+//                     //popped2.remove();
+//                 }
+//             }, 600);//todo: also need to clear after entering a different scene
+//             clearInterval(showInterval);
+//             return;
+//         }
+//         var popped = divs.pop();
+//         popped.style.visibility = 'visible';
+//         divs2.push(popped);
+//     }, 1);
+
+
 //     for (var i=0;i<divs.length;i++){
 //         // is setTimeout re-defined somewhere??
 //         var div = divs[i];
@@ -273,7 +327,7 @@ var game = document.getElementById("game");
             div.style.height='32px'
             div.style.left=obj.x+"px"
             div.style.top=obj.y+"px"
-            div.className="dbg"
+            div.className=dbgElClsNm;//"dbg"
             div.style.zIndex="100005";
             document.getElementById("game").appendChild(div)
         }
@@ -286,7 +340,7 @@ var game = document.getElementById("game");
     }
     for (var i=0;i<map[idx].safe.length;i++){
         var pt=map[idx].safe[i];
-        create_dot(pt.x,pt.y,'black', 7);
+        create_dot(pt.x,pt.y,'black', 27);
     }*/
 }
 
@@ -538,7 +592,7 @@ function get_exit(arr, exit) {
 
 function shift_screen(from, to) {
    window.pathQ.values.length = 0;
-   window.pathFind(to, 1280, 720, {x: 0, y: 0}, {x: 0, y: 0}, map[to].road);
+   window.pathFind(to, 1280, 720, {x: 0, y: 0}, {x: 0, y: 0}, map[to].road, roadBoundary(to));
    window.pathQ.values.length = 0;
    var SHIFT_WAIT=100;
    transitioning=true
@@ -766,6 +820,15 @@ var drawx=0; var drawy1=0;
 var drawQ=[]
 var editEl=null
 
+window.playerCenterOffset = function() {
+    var w= plyrsz[window.nearest_45(0,0,angle)+""].w;//use variable to improve performance
+    var h=plyrsz[window.nearest_45(0,0,angle)+""].h;//use variable to improve performance
+
+    //playerX += (w/2.0);
+    //playerY += (h/2.0);
+    return [(w/2.0), (h/2.0)];
+};
+
 window.playerXY = function() {
     var playerX = parseInt(
         window.getComputedStyle(player)
@@ -778,11 +841,9 @@ window.playerXY = function() {
             .replace("px", "")
     );
 
-    var w= plyrsz[window.nearest_45(0,0,angle)+""].w;//use variable to improve performance
-    var h=plyrsz[window.nearest_45(0,0,angle)+""].h;//use variable to improve performance
-
-    playerX += (w/2.0);
-    playerY += (h/2.0);
+    let [offX, offY] = window.playerCenterOffset();
+    playerX += offX;
+    playerY += offY;
 
     return { x: parseInt(playerX), y: 720-parseInt(playerY) };
 };
@@ -792,7 +853,11 @@ function mousedown(e) {
     console.log("{'x':"+e.clientX + "," + "'y':"+e.clientY+"},")
     window.pnc(e.clientX, e.clientY);
 
-    window.pathFind(idx, 1280, 720, window.playerXY(), {x: e.clientX, y: 720-e.clientY}, map[idx].road);
+    if (window.resolveClick(idx, 1280, 720, window.playerXY(), {x: e.clientX, y: 720-e.clientY}, map[idx].road, roadBoundary(idx)).inBounds) {
+        window.dbg_clear();
+    } else {
+        window.dbg();
+    }
 
     console.log('pathFind', window.pathQ.values);
 
@@ -836,7 +901,7 @@ function furthest_safe_point(x,y,omit) {
     return map[idx].safe[max_idx];
 }
 
-function nearest_safe_point(x,y, omit) {
+window.nearest_safe_point = function(x,y, omit) {
     var min_dist=99999
     var min_idx=-1
     for (var i=0;i<map[idx].safe.length;i++) {
@@ -850,7 +915,7 @@ function nearest_safe_point(x,y, omit) {
 }
 
 
-function goto_nearest_safe(x,y) {
+window.goto_nearest_safe = function(x,y) {
     var min_dist=99999
     var min_idx=-1
     for (var i=0;i<map[idx].safe.length;i++) {
@@ -1390,12 +1455,20 @@ window.gameloop = function() {
             let pathPoint = window.pathQ.values.shift();
             let ppx = parseInt(pathPoint[0]);
             let ppy = parseInt(pathPoint[1]);
+            //window.pnc(ppx, ppy);
             try_x = ppx-x;
             try_y = (ppy)-y;
             if (window.pathQ.values.length == 0)
                 console.log(pathPoint, y, ppy, try_y);
 
             try_y *= -1;
+        } else {
+            /*{*/
+                var ang45 = window.nearest_45(null, null, window.origAngle);
+                var el=document.getElementById("player");
+                //el.src="images/player"+ang45+".png";
+            /*}*/
+            window.origAngle = null;
         }
 
         /*var ctx = document.getElementById("canv").getContext("2d");
@@ -1418,12 +1491,14 @@ window.gameloop = function() {
         {'x':x,'y':y+h},
         {'x':x+w,'y':y+h},*/
         // {'x':x+dx+(w/2.0),'y':y+dy+(h/2.0)}//center-point
-        { x: x+try_x + (w/2.0), y: y+try_y +(h/2.0)}
+        //{ x: x+try_x + (w/2.0), y: y+try_y +(h/2.0)}
+        {x: window.playerXY().x+try_x, y: y+parseInt(h/2.0)+try_y}
     ]
-    var valid=(idx!='D9'&&idx!='E9'&&idx!='E8'&&idx!='B8')?inside_simple_polygons_fallback(pts,map[idx].road):inside_simple_polygons(pts,map[idx].road);
+    // var valid=(idx!='D9'&&idx!='E9'&&idx!='E8'&&idx!='B8')?inside_simple_polygons_fallback(pts,map[idx].road):inside_simple_polygons(pts,map[idx].road);
+    var valid = true;
 
     if (!valid) {
-        if (divs2.length == 0) window.dbg();
+        //if (divs2.length == 0) window.dbg();
         return;
         /*
         console.warn('error', pts);
@@ -1435,8 +1510,11 @@ window.gameloop = function() {
 
     if (valid) {
 //console.warn(valid);
-        if (speedf>0)dbg_clear();
-        setp(x+/*dx*/try_x,y/*+dy*/ +try_y,el)
+        /*if (speedf>0)dbg_clear();*/
+        //setp(x+/*dx*/try_x,y/*+dy*/ +try_y,el)
+        //var [offX, offY] = window.playerCenterOffset();
+        //console.log(offX, offY);
+        setp(x+try_x/*-offX*/, y+try_y/*-offY*/,el);
         /*el.style.top=(y+dy)+"px";
         el.style.left=(x+dx)+"px";*/
         lastX=x;
