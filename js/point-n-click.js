@@ -57,12 +57,12 @@ window.resolveClick = function(id, w, h, from, to, obstacleSets, compressed) {
     let test = (source, target) => {
         return window.pathTest(id, 1280, 720, source, target, obstacleSets, compressed);
     };
-    let [offX, offY] = window.playerCenterOffset();
-    var click = { x: to.x-parseInt(offX), y: to.y+parseInt(offY) };
+    //let [offX, offY] = window.playerCenterOffset();
+    var click = { x: to.x/*-parseInt(offX)*/, y: to.y/*+parseInt(offY)*/ };
     var inBounds = test(from, click);
     var resolved = false;
     var adjClick = { x: click.x, y: click.y };
-    var adjStart = { x: from.x-parseInt(offX), y: from.y+parseInt(offY) };
+    var adjStart = { x: from.x/*-parseInt(offX)*/, y: from.y/*+parseInt(offY)*/ };
     /*
     adjClick.x -= parseInt(offX);
     adjClick.y -= parseInt(offY);
@@ -113,8 +113,8 @@ window.resolveClick = function(id, w, h, from, to, obstacleSets, compressed) {
 
         adjStart = window.nearest_safe_point(adjStart.x, 720-adjStart.y);
         adjStart.y = 720-adjStart.y;
-        adjStart.x -= parseInt(offX);
-        adjStart.y -= parseInt(offY);
+        //adjStart.x -= parseInt(offX);
+        //adjStart.y -= parseInt(offY);
 
         console.warn("finding safe path from, to", adjStart, safeXY)
         //adjStart.x-=parseInt(offX);

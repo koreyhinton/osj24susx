@@ -22,6 +22,7 @@ if (dbg_cell != null) {
     //debug=true;
     idx=dbg_cell
 }
+window.pointCompass(idx, Object.keys(map[idx].entrances));
 window.pathFind(idx, 1280, 720, {x: 0, y: 0}, {x: 0, y: 0}, map[idx].road, roadBoundary(idx));
 
 window.item=null;
@@ -591,6 +592,7 @@ function get_exit(arr, exit) {
 }
 
 function shift_screen(from, to) {
+   window.pointCompass(to, Object.keys(map[to].entrances));
    window.pathQ.values.length = 0;
    window.pathFind(to, 1280, 720, {x: 0, y: 0}, {x: 0, y: 0}, map[to].road, roadBoundary(to));
    window.pathQ.values.length = 0;
@@ -841,9 +843,11 @@ window.playerXY = function() {
             .replace("px", "")
     );
 
+    /*
     let [offX, offY] = window.playerCenterOffset();
     playerX += offX;
     playerY += offY;
+    */
 
     return { x: parseInt(playerX), y: 720-parseInt(playerY) };
 };
@@ -852,6 +856,7 @@ function mousedown(e) {
     e = e || window.event;
     console.log("{'x':"+e.clientX + "," + "'y':"+e.clientY+"},")
     window.pnc(e.clientX, e.clientY);
+
 
     if (window.resolveClick(idx, 1280, 720, window.playerXY(), {x: e.clientX, y: 720-e.clientY}, map[idx].road, roadBoundary(idx)).inBounds) {
         window.dbg_clear();
@@ -863,6 +868,9 @@ function mousedown(e) {
 
     e.view.event.preventDefault();
     return;
+
+    if (window.hasOwnProperty("TEST")){
+    } else { window.dbg(); window.TEST=true; }
     if (editEl==null) editEl=document.getElementById('edit');
     if (editEl.innerHTML != 'Edit' && e.clientY<=720) {
         if (drawDone) {
@@ -1196,7 +1204,7 @@ window.complete_suspect_scene = function(this_card,other_card,green_card,black_c
     }
 }
 
-window.SPEECH_D9="We're running out of time! Christmas is on hold until the elf last seen wearing a ghostface mask in an air balloon returns all the presents. Control your car with left-right arrow keys to steer and up-down arrow keys to adjust speed and spacebar for the map. Good luck!";
+window.SPEECH_D9="Detective Rogers!<p>Is it really you?</p><p>Thank Father Christmas it is you! I just saw a masked figure nearby the RV campground.</p><p>Can you go check it out?";
 window.SPEECH_D8="Thanks for your help! Press enter to view your card progress. Collect all 24 elf suspect cards and then go back to the one where the pattern does not match. And remember to bring the presents back to me.";
 window.SPEECH_D8_2="Well Done! Christmas is Saved. The game is over now. Press 0 to take your restart potion and start a new game.";
 window.SPEECH_C8="Hello friend. If it's not werewolves it's vampires, and there's been a lot of recent sightings. It's my duty to keep this place safe. By the way, I am really in need of some silver, if you find some I'll trade you for it.";
@@ -1931,11 +1939,14 @@ var intId=setInterval(function(){
         var enter=draw_button("enter",1206,597);
         enter.style.height="91px";
         enter.style.border="3px solid rgba(3,91,255,0.4)";
+
+        /*
         draw_button("w",50,535).style.border="3px solid rgba(125,18,255,0.4)";//#7d12ff";
         draw_button("a",3,582).style.border="3px solid rgba(125,18,255,0.4)";
         draw_button("s",50,582).style.border="3px solid rgba(125,18,255,0.4)";
         draw_button("d",97,582).style.border="3px solid rgba(125,18,255,0.4)";
         draw_button("q",3,535).style.border="3px solid rgba(255,103,0,0.4)";//#FF6700";
+        */
 
         draw_map();
 
@@ -1967,8 +1978,8 @@ var intId=setInterval(function(){
 
 
         var recenter=document.createElement("a");
-        recenter.innerHTML="recenter";
-        recenter.onclick= function() {goto_nearest_safe(640,360);}
+        recenter.innerHTML="Accept Quest";//"recenter";
+        recenter.onclick= function() {/*goto_nearest_safe(640,360);*/window.acceptQuest(idx);}
         recenter.style.position="absolute";
         recenter.style.left="10px";//"1100px";
         recenter.style.top="658px";

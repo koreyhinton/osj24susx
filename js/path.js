@@ -16,6 +16,7 @@ window.PathGrid = class {
         //console.warn(obstacleSets[0]);
 
         let savePoints = '"boundary": [';
+        let saveMin = '"boundary": [';
         if (compressed != null) {
             obstacleSets = [];
             fullObsSet = PF.Util.expandPath(compressed);
@@ -34,6 +35,9 @@ window.PathGrid = class {
                 // data error (on transition from cell D9 to cell D8)
                 continue;
             }
+
+            saveMin += `[${obs.x},${this.grid.height-obs.y}],`;
+
             var points = new PF.AStarFinder()
                 .findPath(last.x, last.y, obs.x, this.grid.height-obs.y, this.clone());
             /*for (var k=0; k<points.length; k++) {
@@ -59,6 +63,8 @@ window.PathGrid = class {
             this.grid.setWalkableAt(x, y, false);
         }
         savePoints += '],';
+        saveMin += '],';
+        console.log(saveMin);
         console.log(savePoints);
         // console.warn(this.grid);
     }

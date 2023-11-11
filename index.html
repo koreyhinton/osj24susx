@@ -3,6 +3,22 @@
 <head>
     <title>24susx</title>
     <link rel="stylesheet" href="game.css">
+    <script src="js/quest.js"></script>
+    <!--
+    <script>
+        var script = document.createElement('script');
+        script.onload = function(a) {
+            console.warn(a);
+            console.warn(script);
+        };
+        script.src = "ts/bundle.js";
+        document.head.appendChild(script);
+        //import {RoadPath} from "ts/bundle.js";
+        //window.RoadPath = (require("ts/bundle.js")).RoadPath;
+    </script>
+    -->
+    <script src="ts/bundle.js"></script>
+    <script src="js/compass.js"></script>
     <script src="js/point-n-click.js"></script>
     <script src="music.js"></script>
     <script src="foregrounds.js"></script>
@@ -67,7 +83,9 @@
 </head>
 <body>
     <div id="game"></div>
-    <canvas id="canv" width="2280" height="820" style="position:absolute;top:0px;left:0px;border:4px solid red;"></canvas>
+    <canvas id="canv" width="2280" height="820" style="position:absolute;top:0px;left:0px;border:4px solid red;z-index:-1"></canvas>
+    <img src="images/backlit.png" style="position:absolute;left:50px;top:582px;"></img>
+    <img id="compass" src="images/estrella.png" style="position:absolute;left:50px;top:582px;"></img>
     <div>
         <table>
             <tr>
