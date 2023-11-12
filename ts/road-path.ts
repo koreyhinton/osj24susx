@@ -5,6 +5,7 @@ export class RoadPath {
     // subSheet9: type;
     grid: any;
     cellSheet: any;
+    h: number;
     PF: any;
     constructor(cellSheet: any, PF: any) {
         this.cellSheet = cellSheet;
@@ -12,7 +13,7 @@ export class RoadPath {
     }
     xy(cellName: string): any {
         let x = 3 * (cellName.charCodeAt(0)-'A'.charCodeAt(0)+1);
-        let y = 3 * (parseInt(cellName.substring(1)) -1 + 1);
+        let y = this.h - ( 3 * (parseInt(cellName.substring(1)) -1 + 1) );
         // +1, so -1 offset won't go below 0
         return {x,y};
     }
@@ -23,7 +24,8 @@ export class RoadPath {
         ].sort((a,b)=>a-b);
         let rows = [
             ...new Set(keys.map(a => parseInt(a.substring(1))-1 +1 ))
-        ].sort((a,b)=>a-b);
+        ].sort((a,b)=>/*a-b*/b-a);
+        this.h = 3 * (rows.length)+2;
         // +1 so that a -1 offset doesn't go below 0
         console.log(columns);
         console.log(rows);
@@ -36,7 +38,7 @@ export class RoadPath {
             let key = keys[i];
             let xy = this.xy(key);
             let x = xy.x;
-            let y = xy.y;
+            let y = /*this.h - */xy.y;
             if (!compass.any()) {
                 [
                     [-1,-1],[-1,0],[-1,1],[0,-1],[1,0],[1,-1],[0,0],[0,1],[1,1]
@@ -47,10 +49,10 @@ export class RoadPath {
             }
             let noWalk = [ [-1,-1], [1,1], [1,-1], [-1,1]  ];
             if (!compass.n()) {
-                noWalk.push([0,-1]);
+                noWalk.push([0,1]);
             }
             if (!compass.s()) {
-                noWalk.push([0,1]);
+                noWalk.push([0,-1]);
             }
             if (!compass.w()) {
                 noWalk.push([-1,0]);
@@ -71,10 +73,10 @@ export class RoadPath {
         if (this.grid == null) this.buildGrid();
         let from = this.xy(sourceCell);
         let fromX = from.x;
-        let fromY = from.y;
+        let fromY = /*this.h - */from.y;
         let xy = this.xy(targetCell);
         let x = xy.x;
-        let y = xy.y;
+        let y = /*this.h - */xy.y;
         let vals = new this.PF.AStarFinder({allowDiagonal: false})
             .findPath(fromX, fromY, x, y, this.grid.clone());
         console.warn('from road-path', fromX,fromY);

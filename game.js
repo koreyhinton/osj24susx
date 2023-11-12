@@ -593,6 +593,8 @@ function get_exit(arr, exit) {
 
 function shift_screen(from, to) {
    window.pointCompass(to, Object.keys(map[to].entrances));
+   window.displayQuestText(to);
+   window.displayQuestHint(to);
    window.pathQ.values.length = 0;
    window.pathFind(to, 1280, 720, {x: 0, y: 0}, {x: 0, y: 0}, map[to].road, roadBoundary(to));
    window.pathQ.values.length = 0;
@@ -855,6 +857,19 @@ window.playerXY = function() {
 function mousedown(e) {
     e = e || window.event;
     console.log("{'x':"+e.clientX + "," + "'y':"+e.clientY+"},")
+
+    let questStyle = window.getComputedStyle(document.getElementById("quest"));
+    let qx1 = parseInt(questStyle.left.replace("px", ""));
+    let qy1 = parseInt(questStyle.top.replace("px", ""));
+    let qx2 = qx1+parseInt(questStyle.width.replace("px", ""));
+    let qy2 = qy1+parseInt(questStyle.height.replace("px", ""));
+    // console.log('quest', qx1,qy1,qx2,qy2);
+    if (e.clientX >= qx1 && e.clientX <= qx2 && e.clientY >= qy1 && e.clientY <= qy2) {
+        console.log('cancel point-n-click for quest button');
+        e.view.event.preventDefault();
+        return;
+    }
+
     window.pnc(e.clientX, e.clientY);
 
 
@@ -1977,15 +1992,27 @@ var intId=setInterval(function(){
         susCard.classList.add("collect");
 
 
-        var recenter=document.createElement("a");
-        recenter.innerHTML="Accept Quest";//"recenter";
-        recenter.onclick= function() {/*goto_nearest_safe(640,360);*/window.acceptQuest(idx);}
-        recenter.style.position="absolute";
-        recenter.style.left="10px";//"1100px";
-        recenter.style.top="658px";
-        recenter.style.zIndex="1000008";
-        recenter.id="recenter";
-        game.appendChild(recenter);
+        var quest=document.createElement("a");
+        quest.innerHTML="Accept Quest";//"quest";
+        quest.onclick = function(e) {
+            e.view.event.preventDefault();
+            if(this.innerHTML == "Quest Accepted") return;
+            if(this.innerHTML == "End Quest") {
+                quest.innerHTML="Accept Quest";
+                window.quest = null;
+                window.pointCompass(idx, Object.keys(map[idx].entrances));
+                return;
+            }
+            window.acceptQuest(idx);
+            this.innerHTML="Quest Accepted";
+            console.log("accepted");
+        }
+        quest.style.position="absolute";
+        quest.style.left="10px";//"1100px";
+        quest.style.top="658px";
+        quest.style.zIndex="1000008";
+        quest.id="quest";
+        game.appendChild(quest);
 
 	if (idx=="D9")
             music_play("D9");

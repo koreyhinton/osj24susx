@@ -48,6 +48,10 @@ window.nearest_45 = function(a, b, deg) {
 };
 
 window.resolveClick = function(id, w, h, from, to, obstacleSets, compressed) {
+
+    let fromYInst = new Y(from.y, YType.Geom);
+    let toYInst = new Y(to.y, YType.Geom);
+
     var distf = (x1,y1,x2,y2) => {
         return Math.sqrt((x2 - x1)*(x2 - x1) + (y2 - y1)*(y2 - y1));
     };
@@ -55,25 +59,23 @@ window.resolveClick = function(id, w, h, from, to, obstacleSets, compressed) {
         return window.pathFind(id, 1280, 720, source, target, obstacleSets, compressed);
     }
     let test = (source, target) => {
+        console.log('test', source, target);
         return window.pathTest(id, 1280, 720, source, target, obstacleSets, compressed);
     };
-    //let [offX, offY] = window.playerCenterOffset();
-    var click = { x: to.x/*-parseInt(offX)*/, y: to.y/*+parseInt(offY)*/ };
-    var inBounds = test(from, click);
+
+    var click = { x: to.x, y: toYInst.geomY() };
+    var inBounds = test(
+        {x: from.x, y: fromYInst.geomY()},
+        {x: click.x, y: toYInst.geomY()}
+    );
     var resolved = false;
-    var adjClick = { x: click.x, y: click.y };
-    var adjStart = { x: from.x/*-parseInt(offX)*/, y: from.y/*+parseInt(offY)*/ };
-    /*
-    adjClick.x -= parseInt(offX);
-    adjClick.y -= parseInt(offY);
-    adjStart.x -= parseInt(offX);
-    adjStart.y -= parseInt(offY);
-    */
+    var adjClick = { x: click.x, y: toYInst.geomY() };
+    var adjStart = { x: from.x, y: fromYInst.geomY() };
 
     if (inBounds) {
         resolved = true;
     } else {
-        var fullDist = distf(from.x,from.y, click.x, click.y);
+        var fullDist = distf(from.x,fromYInst.geomY(), click.x, toYInst.geomY());
         console.warn(fullDist, distf(from.x,from.y, click.x, click.y));
         // optimize for 10 pathFind calls
         var ratio = /*parseInt(*/fullDist / 10.0;/*);*/
@@ -86,8 +88,8 @@ window.resolveClick = function(id, w, h, from, to, obstacleSets, compressed) {
         let a = angle;
         while ((fullDist > 10) && (fullDist - 10 > incrDist)) {
             var dxy = window.dxy((a+180)%360, incrDist);
-            adjClick = { x: click.x+parseInt(dxy.dx), y: click.y+parseInt(dxy.dy) };
-            if (test(from, adjClick)) {
+            adjClick = { x: click.x+parseInt(dxy.dx), y: toYInst.geomY()+parseInt(dxy.dy) };
+            if (test({x: from.x, y: fromYInst.geomY()}, adjClick)) {
                 resolved = true;
                 break;
             }
@@ -96,11 +98,9 @@ window.resolveClick = function(id, w, h, from, to, obstacleSets, compressed) {
         }
     }
 
-    var safeXY = nearest_safe_point(adjClick.x, 720-adjClick.y);
-    safeXY.y = 720-adjClick.y;
-    /*safeXY.x -= parseInt(offX);
-    safeXY.y -= parseInt(offY);*/
-    if (test(adjClick, safeXY)) {
+    var safeXY = nearest_safe_point(adjClick.x, new Y(adjClick.y,YType.Geom).domY());
+    safeXY.y = new Y(safeXY.y).geomY(); //720-adjClick.y;
+    if (false/*todo: can remove block?*/ && !test(adjClick /*geomY*/, safeXY /*geom Y*/)) {
         // if player won't be able to walk from the target to the target's
         // nearest safe point, then just have the player walk to the nearest
         // safe point.
@@ -111,19 +111,15 @@ window.resolveClick = function(id, w, h, from, to, obstacleSets, compressed) {
         //find(safeXY);
         //adjClick = safeXY;
 
-        adjStart = window.nearest_safe_point(adjStart.x, 720-adjStart.y);
-        adjStart.y = 720-adjStart.y;
+        adjStart = window.nearest_safe_point(adjStart.x, new Y(adjStart.y, YType.Geom).domY());
+        adjStart.y = new Y(adjStart.y, YType.Dom).geomY();
         //adjStart.x -= parseInt(offX);
         //adjStart.y -= parseInt(offY);
 
         console.warn("finding safe path from, to", adjStart, safeXY)
-        //adjStart.x-=parseInt(offX);
-        //adjStart.y+=parseInt(offY);
         inBounds = true;
         resolved = true;
         console.warn(adjStart);
-        //adjStart.x -= parseInt(offX);
-        //adjStart.y -= parseInt(offY);
         console.warn('re-assigning to', adjStart);
         //window.setp(adjStart.x, (720-adjStart.y));
         //window.goto_nearest_safe(from.x, 720-from.y); //adjStart.x, (720-adjStart.y));
@@ -131,8 +127,10 @@ window.resolveClick = function(id, w, h, from, to, obstacleSets, compressed) {
         // the solution of finding the nearest safe point was buggy too,
         // until a more permanent fix just do exactly what the recenter button
         // does if player is stuck outside the bounds:
-        window.goto_nearest_safe(640,360); // recenter
-        return { inBounds, resolved };
+
+        //window.goto_nearest_safe(640,360); // recenter
+        console.warn("ERROR!", adjStart, adjClick, safeXY, from, to);
+        return { inBounds: false, resolved: true };
     }
     console.warn(find(adjStart, adjClick));
     return {
