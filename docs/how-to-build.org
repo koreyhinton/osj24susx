@@ -1,13 +1,21 @@
+* Build game branch
+git fetch origin main
+git fetch origin media
+git merge origin/main origin/media
+
+* Create gifs
+cd images/
+convert -dispose previous -size 47x39 -delay 20 -loop 0 player0_*.png player0.gif
 
 * Pixelate a photo background image
 #+BEGIN_SRC sh
 # if necessary for webp files, convert to jpg first:
 mogrify -format jpg photoname.webp
 
-PHIXEL_PATH=~/gh/phixelgator/phixelgator.py  # path to phixelgator
-PHOTO_IN=photo.jpg  # existing file to read in
-PHOTO_OUT=photo.png # new file to create
-python $PHIXEL_PATH -b4 -p atari2600 $PHOTO_IN $PHOTO_OUT
+PHIXEL_PATH=/k/repos/gh/phixelgator/phixelgator.py  # path to phixelgator
+PHOTO_IN=originals/Playa_del_Postiguet_Alicante_Espana_2014-07-04_DD_47-scaled.jpeg  # existing file to read in
+PHOTO_OUT=./uncropped/Playa_del_Postiguet.png # new file to create
+python3 $PHIXEL_PATH -b4 -p atari2600 $PHOTO_IN $PHOTO_OUT
 #+END_SRC
 
 * See all dimensions of files in dir
@@ -17,7 +25,9 @@ identify -format '%wx%h\n' *.jpg | sort
 
 * Crop all to the same height
 #+BEGIN_SRC sh
-mogrify -gravity South -crop 1280x720+0+0 *.png
+cp uncropped/Playa_del_Postiguet.png ./Playa_del_Postiguet.png
+mogrify -gravity Center -crop 1280x720+0+200 ./Playa_del_Postiguet.png
+# mogrify -gravity South -crop 1280x720+0+0 ./Playa_del_Postiguet.png # mogrify -gravity South -crop 1280x720+0+0 *.png
 #+END_SRC
 * create pixel graphics
 #+BEGIN_SRC sh

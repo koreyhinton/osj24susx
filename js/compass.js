@@ -1,5 +1,9 @@
 window.pointCompassDir = function(dir) {
     var c = document.getElementById("compass");
+    if (dir == null) {
+        c.src = `images/estrella.png`;
+        return;
+    }
     c.src = `images/point_${dir}.png`;
 };
 window.pointCompass = function(currentKey, entranceKeys) {

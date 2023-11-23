@@ -169,6 +169,10 @@ window.pnc = function(x, y) {
     var el=document.getElementById("player");
     el.src="images/player"+ang45+".png";
 
+    if (ang45 == 0 || ang45 >= 180) {
+        el.src="images/player"+ang45+".gif";
+    }
+
 //gameloop();
     //pnc_q.push({a: {x: playerX, y: 720-playerY}, b: {x: x, y: 720-playerY}});
     //pnc_q.push({a: {x: x, y: playerY}, b: {x: x, y: y}});

@@ -324,10 +324,10 @@ window.dbg = function() {
             div.style.position="absolute";
             var color= ['rgba(255,255,0,0.2)','rgba(0,255,0,0.2)','rgba(0,255,255,0.2)','rgba(255,0,255,0.2)'][i%4];
             div.style.backgroundColor=color;
-            div.style.width='32px'
-            div.style.height='32px'
-            div.style.left=obj.x+"px"
-            div.style.top=obj.y+"px"
+            div.style.width='44px'
+            div.style.height='44px'
+            div.style.left=(obj.x-22)+"px"
+            div.style.top=(obj.y-22)+"px"
             div.className=dbgElClsNm;//"dbg"
             div.style.zIndex="100005";
             document.getElementById("game").appendChild(div)
@@ -399,7 +399,7 @@ function inside_simple_polygons(pts, polys) {
     // then it is assumed to be within the road
 }
 
-function inside_rect(pts, rect) {
+window.inside_rect = function(pts, rect) {
     for (var i=0; i<pts.length;i++) {
         var pt=pts[i];
         if ( pt.x>rect.x1 && pt.x<rect.x2 &&
@@ -592,6 +592,7 @@ function get_exit(arr, exit) {
 }
 
 function shift_screen(from, to) {
+   new SceneActivator().next();
    window.pointCompass(to, Object.keys(map[to].entrances));
    window.displayQuestText(to);
    window.displayQuestHint(to);
@@ -650,6 +651,15 @@ function shift_screen(from, to) {
             culprit.style.top=(pt.y-culp_h)+"px";
        }
        setp(map[idx].entrances[from].x, map[idx].entrances[from].y)
+       /*
+       // note: Now entrance positions are no longer needed(only entrance names)
+       //       in cells/*.js, since placement can be calculated with
+       //       the road compass and safe points (in ts/player-shift.ts).
+       //       This eliminates the need to track and make sure exit points and
+       //       entrance points are not in conflict (which caused player to
+       //       reset back to previous screen).
+       new PlayerShift(PlayerShift.current()).shift(from, to);
+       */
 
        /*undoing collected letters has to wait to avoid cards dropping even after leaving scene*/
        var ltrs=document.getElementsByClassName("collected");
@@ -870,23 +880,27 @@ function mousedown(e) {
         return;
     }
 
-    window.pnc(e.clientX, e.clientY);
+    if (editEl==null) editEl=document.getElementById('edit');
+    if (editEl.innerHTML == 'Edit') {
+        window.pnc(e.clientX, e.clientY);
 
-
-    if (window.resolveClick(idx, 1280, 720, window.playerXY(), {x: e.clientX, y: 720-e.clientY}, map[idx].road, roadBoundary(idx)).inBounds) {
-        window.dbg_clear();
-    } else {
-        window.dbg();
+        if (window.resolveClick(idx, 1280, 720, window.playerXY(), {x: e.clientX, y: 720-e.clientY}, map[idx].road, roadBoundary(idx)).inBounds) {
+            window.dbg_clear();
+        } else {
+            window.dbg();
+        }
     }
 
     console.log('pathFind', window.pathQ.values);
 
     e.view.event.preventDefault();
-    return;
+    if (editEl.innerHTML == 'Edit') {
+        return;
+    }
 
     if (window.hasOwnProperty("TEST")){
     } else { window.dbg(); window.TEST=true; }
-    if (editEl==null) editEl=document.getElementById('edit');
+
     if (editEl.innerHTML != 'Edit' && e.clientY<=720) {
         if (drawDone) {
             if (editEl.innerHTML=='Rect')
@@ -1543,14 +1557,18 @@ window.gameloop = function() {
         lastX=x;
         lastY=y;
         var rect={}
-        rect.x1=x+dx;
-        rect.y1=y+dy;
-        rect.x2=rect.x1+w;
-        rect.y2=rect.y1+h;
+        rect.x1=x+(1.0/6.0*w);//dx;
+        rect.y1=y+(1.0/6.0*h);//;+dy;
+        rect.x2=rect.x1+w+(1.0/6.0*w);
+        rect.y2=rect.y1+h+(1.0/6.0*h);
         if (!finalScene()){
-            for (var i=0;i<map[idx].exits.length;i++) {
-                if (inside_rect(map[idx].exits[i].dots, rect)) {
-                    shift_screen(idx, map[idx].exits[i].name)
+            var isAtExitPoint = false;
+            var sa = new SceneActivator();
+            sa.tryActivate(map[idx], rect);
+            if (sa.active()) {
+                let nextSceneName = sa.sceneExit(map[idx], rect);
+                if (nextSceneName != null) {
+                    shift_screen(idx, nextSceneName);
                 }
             }
         }
