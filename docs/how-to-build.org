@@ -7,6 +7,9 @@ git merge origin/main origin/media
 cd images/
 convert -dispose previous -size 47x39 -delay 20 -loop 0 player0_*.png player0.gif
 
+cd foreground/
+convert -dispose previous -delay 35 -loop 0 pond*.png pond.gif
+
 * Pixelate a photo background image
 #+BEGIN_SRC sh
 # if necessary for webp files, convert to jpg first:

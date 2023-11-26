@@ -592,7 +592,11 @@ function get_exit(arr, exit) {
 }
 
 function shift_screen(from, to) {
-   new SceneActivator().next();
+   var sp = new SceneProps();
+   sp.clear();
+   sp[to.toLowerCase()]?.();
+   var sa = new SceneActivator();
+   sa.next();
    window.pointCompass(to, Object.keys(map[to].entrances));
    window.displayQuestText(to);
    window.displayQuestHint(to);

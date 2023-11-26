@@ -1,23 +1,17 @@
 type Rect = { x1: number, y1: number, x2: number, y2: number };
-export class SceneActivator {
-    getActive: ()=>boolean;
-    setActive: (val: boolean)=>void;
+import {State} from './state.js';
+export class SceneActivator extends State {
+    //getActive: ()=>boolean;
+    //setActive: (val: boolean)=>void;
     constructor() {
-        if (!(window as any).hasOwnProperty("SA_STATE")) {
-            (window as any).SA_STATE = {active: false};
-        }
-        this.getActive = () => {
-            return (window as any).SA_STATE.active;
-        };
-        this.setActive = (val: boolean) => {
-            (window as any).SA_STATE.active = val;
-        };
+        super('SA_STATE', 'active', false);
+        // this.setState('active', false);
     }
     next() {
-        this.setActive(false);
+        super.setState('active', false); //this.setActive(false);
     }
     active(): boolean {
-        return this.getActive();
+        return super.getState('active'); //.getActive();
 /*
         if (this.isActive) return true;
         var rect={}
@@ -41,7 +35,8 @@ export class SceneActivator {
         if (this.active()) {
             return;
         }
-        this.setActive(null == this.sceneExit(mapCell, rect));
+        //console.log('try', this.sceneExit(mapCell, rect));
+        super.setState('active', null == this.sceneExit(mapCell, rect));
     }
 }
 

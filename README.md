@@ -6,6 +6,14 @@ AGPL v3 License, see COPYING file
 
 # Included Foreground Image Credits
 
+ https://vectorportal.com/vector/golf-cart/31271 Image by <a href=" https://www.vectorportal.com" >Vectorportal.com</a>,  <a class="external text" href="https://creativecommons.org/licenses/by/4.0/" >CC BY</a>
+
+Pine Trees by tyke44060 on DeviantArt https://www.deviantart.com/tyke44060/art/Pine-Trees-427656842
+
+vectorportal REINDEER CARTOON IMAGE Royalty Free Stock SVG Vector and Clip Art https://vectorportal.com/vector/reindeer-cartoon-image/15170 Image by <a href=" https://www.vectorportal.com" >Vectorportal.com</a>,  <a class="external text" href="https://creativecommons.org/licenses/by/4.0/" >CC BY</a>
+
+Santa's Sleigh Royalty Free Stock SVG Vector and Clip Art https://vectorportal.com/vector/santa%27s-sleigh/35397 Image by <a href=" https://www.vectorportal.com" >Vectorportal.com</a>,  <a class="external text" href="https://creativecommons.org/licenses/by/4.0/" >CC BY</a>
+
 pixabay license
 
 balloon-36286__340.webp https://cdn.pixabay.com/photo/2012/04/18/00/31/balloon-36286__340.png
