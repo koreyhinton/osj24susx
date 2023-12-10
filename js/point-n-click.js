@@ -59,6 +59,7 @@ window.resolveClick = function(id, w, h, from, to, obstacleSets, compressed) {
         return window.pathFind(id, 1280, 720, source, target, obstacleSets, compressed);
     }
     let test = (source, target) => {
+        return true;
         console.log('test', source, target);
         return window.pathTest(id, 1280, 720, source, target, obstacleSets, compressed);
     };

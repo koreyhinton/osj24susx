@@ -12,7 +12,7 @@ window.visited=['D9'];
 window.visitedImages={}
 window.mapVisibility='hidden';
 
-var idx="D9";
+window.idx="D9";
 var debug=false;
 var dbg_cell=new URL(location.href).searchParams.get("c");
 var dbg_item=new URL(location.href).searchParams.get("item");
@@ -75,7 +75,7 @@ if (dbg_cell!=null) instructions=""
 
 function splash_screen(){
     var p="&nbsp;";
-    var game=document.getElementById("game")
+    var splash = document.getElementById("splash"); // var game=document.getElementById("game")
     var a1=document.createElement("a");
     a1.innerHTML=p+p+p+p+"24"+p+p+p;
     a1.className="splash splash1 xredtxtoutline";
@@ -88,16 +88,16 @@ function splash_screen(){
     var a4=document.createElement("a");
     a4.innerHTML="Christmas!";
     a4.className="splash splash4 xgreentxtoutline";
-    game.appendChild(a1);
-    game.appendChild(a2);
-    game.appendChild(a3);
-    game.appendChild(a4);
+    splash.appendChild(a1);
+    splash.appendChild(a2);
+    splash.appendChild(a3);
+    splash.appendChild(a4);
 
     var btn=document.createElement("a");
     btn.className="splashplay";
     btn.innerHTML="Play";
-    btn.onmousedown=function(){ instructions=""; setTimeout(function(){ btn.remove();a1.remove();a2.remove();a3.remove();a4.remove();  },1400)  };
-    game.appendChild(btn);
+    btn.onmousedown=function(e){ instructions=""; /*setTimeout(function(){ btn.remove();a1.remove();a2.remove();a3.remove();a4.remove();document.getElementById("splash").remove();  },1400);*/ e.view.event.preventDefault();  };
+    splash.appendChild(btn);
 }
 splash_screen();
 
@@ -872,6 +872,20 @@ function mousedown(e) {
     e = e || window.event;
     console.log("{'x':"+e.clientX + "," + "'y':"+e.clientY+"},")
 
+    if (document.getElementById("splash") != null) {
+        document.getElementById("splash").remove();
+        e.view.event.preventDefault();
+        return;
+    }
+
+    if (inside_rect([{x: e.clientX, y: e.clientY}], new GeomEl(document.getElementById("compass")).rect())) {
+        toggleCompass(document.getElementById("mapTile")==null);
+        e.view.event.preventDefault();
+        return;
+    }
+
+    toggleCompass(false);
+
     let questStyle = window.getComputedStyle(document.getElementById("quest"));
     let qx1 = parseInt(questStyle.left.replace("px", ""));
     let qy1 = parseInt(questStyle.top.replace("px", ""));
@@ -1065,10 +1079,7 @@ function keydown(e) {
     }
     else if (e.keyCode == '32') {
         //space
-        if (window.mapVisibility=='hidden')
-            window.mapVisibility='visible';
-        else window.mapVisibility='hidden';
-        document.getElementById('map').style.visibility=window.mapVisibility;
+        window.toggleCompass(document.getElementById("mapTile")==null);
         e.view.event.preventDefault();
     }
     else if (e.key=="q"||e.key=="Q") {
@@ -1796,7 +1807,7 @@ var intId=setInterval(function(){
     if (instructions.length==0) {
         clearInterval(intId);
         var game=document.getElementById("game");
-        game.innerHTML="";
+        //game.innerHTML="";
         game.style.backgroundImage="url('images/background/"+map[idx].img+"')"
         var el=document.createElement("img");
         el.id="player";
@@ -1962,14 +1973,16 @@ var intId=setInterval(function(){
         document.onkeydown = keydown;
         document.onclick=mousedown;
 
-        /*draw_button("up",1000,600-3);
+        /*
+        draw_button("up",1000,600-3);
         draw_button("down",1000,644);
         draw_button("left",956-3,644);
-        draw_button("right",1044+3,644);*/
+        draw_button("right",1044+3,644);
         var space=draw_button("space",764,644);
         space.style.width='176px';
         space.style.height='44px';
         space.style.border="3px solid rgba(255,7,58,0.4)";
+        */
         var zero=draw_button("0",1103,644);
         zero.style.width="91px";
         zero.style.border="3px solid rgba(91,255,3,0.4)";
@@ -2014,7 +2027,9 @@ var intId=setInterval(function(){
         susCard.classList.add("collect");
 
 
-        var quest=document.createElement("a");
+        var quest=document.getElementById("quest"); //createElement("a");
+console.warn(quest, document.getElementById("game").children);
+        // quest.classList.add("ui");
         quest.innerHTML="Accept Quest";//"quest";
         quest.onclick = function(e) {
             e.view.event.preventDefault();
@@ -2029,12 +2044,8 @@ var intId=setInterval(function(){
             this.innerHTML="Quest Accepted";
             console.log("accepted");
         }
-        quest.style.position="absolute";
-        quest.style.left="10px";//"1100px";
-        quest.style.top="658px";
-        quest.style.zIndex="1000008";
-        quest.id="quest";
-        game.appendChild(quest);
+        //quest.id="quest";
+        //game.appendChild(quest);
 
 	if (idx=="D9")
             music_play("D9");

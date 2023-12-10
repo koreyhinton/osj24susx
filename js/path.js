@@ -102,9 +102,56 @@ window.pathFind = function(id, w, h, from, to, obstacleSets, compressed) {
 
     if (obstacleSwap) return;
 
+    /*
+    let firstRun = window.track == null;
+    window.track = "";
+    let heur = (dx, dy) => {
+        if (this.minDx == null) {
+            this.minDx = dx;
+            this.minDy = dy;
+        }
+        this.minDx = Math.min(dx, this.minDx);
+        this.minDy = Math.min(dy, this.minDy);
+        if (Math.min(dx, dy) > Math.min(this.minDx, this.minDy)) {
+            console.log("return 0");
+            return 0;
+        }
+        if (firstRun) {
+            window.track += `${dx},${dy}
+`;
+        }
+        return Math.min(Math.min(dx, dy), Math.min(this.minDx, this.minDy));
+    };
+    */
+
+
+    let clonedGrid = window.pathG.value.clone();
+
     // step 2 - re-assign path queue
-    window.pathQ.values = new PF.AStarFinder({allowDiagonal: true,dontCrossCorners:true}) /*AStarFinder*/ /*BestFirstFinder()*/
-        .findPath(from.x, from.y, to.x, to.y, window.pathG.value.clone());
+    window.pathQ.values = new PF.AStarFinder({allowDiagonal: true,dontCrossCorners:true/*, heuristic: heur*/}) /*AStarFinder*/ /*BestFirstFinder()*/
+        .findPath(from.x, from.y, to.x, to.y, clonedGrid);
+    // console.log("Clone: ", clonedGrid.nodes.filter((nds) => nds.filter((n) => n.h != null).length > 0));
+
+    if (pathQ.values.length == 0) {
+        let minNode = clonedGrid.nodes[0][0];
+        let minH = 1280;
+        for (var i=0; i< clonedGrid.nodes.length; i++) {
+            for (var j=0; j<clonedGrid.nodes[i].length; j++) {
+                if (clonedGrid.nodes[i][j].h != null) {
+                    if (clonedGrid.nodes[i][j].h < minH) {
+                        minNode = clonedGrid.nodes[i][j];
+                        minH = clonedGrid.nodes[i][j].h;
+                    }
+                    //console.log(i,j,clonedGrid.nodes[i][j]);
+                    //break;
+                }
+            }
+        }
+        window.pathQ.values = new PF.AStarFinder({allowDiagonal: true,dontCrossCorners:true/*, heuristic: heur*/}) /*AStarFinder*/ /*BestFirstFinder()*/
+            .findPath(from.x, from.y, minNode.x, minNode.y, window.pathG.value.clone());
+        console.log('found new path', window.pathQ.values);
+    }
+
     if (window.pathQ.values.length > 0)
         window.pathQ.values = PF.Util.expandPath(PF.Util.smoothenPath(window.pathG.value.clone(), window.pathQ.values));
 

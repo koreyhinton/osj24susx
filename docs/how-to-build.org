@@ -1,7 +1,10 @@
 * Build game branch
+#+BEGIN_SRC shell
+# in a separate local-only branch (e.g., game branch)
 git fetch origin main
 git fetch origin media
 git merge origin/main origin/media
+#+END_SRC
 
 * Create gifs
 cd images/
